@@ -6,30 +6,30 @@ defmodule ProcessManager do
   end
 
   def handle_cast({:create_process, message}, state) do
-    spawn_link(fn -> create_process(message) end)
+    session = :rand.uniform(999_999)
+    spawn_link(fn -> create_process(session, message) end)
     {:noreply, state}
   end
 
   def handle_call(:num_processes, _from, state) do
-    processes = :ets.info(:processes)
+    processes = :ets.tab2list(:process_manager)
     {:reply, processes, state}
   end
 
-  def create_process(message) do
-    session = :rand.uniform(999_999)
-
-    :ets.insert(:processes, {session, message})
+  def create_process(session, message) do
+    :ets.insert(:process_manager, {session, message})
 
     sleep_time = Enum.random(20_000..60_000)
     :timer.sleep(sleep_time)
 
-    :ets.delete(:processes, {session, message})
+    IO.inspect "going to delete session #{session}"
+    :ets.delete(:process_manager, session)
 
     exit(:normal)
   end
 
   def init(_) do
-    :ets.new(:processes, [:set, :public])
+    :ets.new(:process_manager, [:named_table, :set, :public])
     {:ok, []}
   end
 
