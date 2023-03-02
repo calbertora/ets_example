@@ -6,7 +6,7 @@ defmodule ProcessManager do
   end
 
   def handle_cast({:create_process, session, message}, state) do
-    spawn_link(fn -> create_process(session) end)
+    spawn_link(fn -> create_process(session, message) end)
 
     :ets.insert(:processes, {session, message})
 
@@ -18,11 +18,11 @@ defmodule ProcessManager do
     {:reply, processes, state}
   end
 
-  def create_process(session) do
+  def create_process(session, message) do
     sleep_time = :rand.uniform(20_000..60_000)
     :timer.sleep(sleep_time)
 
-    :ets.delete(:processes, session)
+    :ets.delete(:processes, {session, message})
 
     exit(:normal)
   end
